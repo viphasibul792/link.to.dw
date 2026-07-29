@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Drive Bulk PDF Downloader</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            background: #ffffff;
+            max-width: 650px;
+            width: 100%;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-top: 0;
+            color: #1a73e8;
+            text-align: center;
+        }
+        p {
+            color: #5f6368;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        textarea {
+            width: 100%;
+            height: 220px;
+            padding: 12px;
+            border: 1px solid #dadce0;
+            border-radius: 6px;
+            font-size: 14px;
+            resize: vertical;
+            margin-top: 10px;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #1a73e8;
+        }
+        .btn-container {
+            margin-top: 15px;
+            text-align: center;
+        }
+        button {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #1557b0;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+            text-align: center;
+            color: #333;
+        }
+        .note {
+            background-color: #e8f0fe;
+            border-left: 4px solid #1a73e8;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 13px;
+            color: #1967d2;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Google Drive Bulk Downloader</h2>
+    <p>নিচের টেক্সট বক্সে আপনার লিঙ্কগুলো পেস্ট করুন এবং <b>Start Downloads</b> বাটনে ক্লিক করুন।</p>
+    
+    <textarea id="linksInput" placeholder="এখানে আপনার লিঙ্কগুলো দিন, যেমন:&#10;Lecture:09 https://drive.google.com/u/0/uc?id=1josJYNAkRyALl3mvYCiRie7vuJCL4cqX&export=download&#10;Lecture:10 https://drive.google.com/u/0/uc?id=10f96qzxIjCxzNVNU58PagzbJM_bqV1vw&export=download"></textarea>
+    
+    <div class="btn-container">
+        <button id="downloadBtn" onclick="startBulkDownload()">Start Downloads</button>
+    </div>
+
+    <div id="status"></div>
+
+    <div class="note">
+        <b>টিপস:</b> প্রথমবার ক্লিক করার পর যদি ব্রাউজার থেকে <i>"Allow multiple downloads"</i> চাওয়া হয়, তবে অবশ্যই <b>Allow</b> বাটনে ক্লিক করবেন।
+    </div>
+</div>
+
+<script>
+    function startBulkDownload() {
+        const text = document.getElementById('linksInput').value;
+        const statusDiv = document.getElementById('status');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // লিঙ্ক খোঁজার জন্য Regular Expression (URL Extraction)
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const matches = text.match(urlRegex);
+
+        if (!matches || matches.length === 0) {
+            alert('টেক্সট বক্সে কোনো বৈধ ড্রাইভ লিঙ্ক পাওয়া যায়নি!');
+            return;
+        }
+
+        // বাটন ডিজেবল করা যাতে বারবার ক্লিক না হয়
+        downloadBtn.disabled = true;
+        statusDiv.innerText = `ডাউনলোড শুরু হচ্ছে... মোট লিঙ্ক: ${matches.length}টি`;
+
+        let index = 0;
+
+        // একের পর এক ডাউনলোড করার ফাংশন (১ সেকেন্ড পর পর)
+        function triggerNextDownload() {
+            if (index < matches.length) {
+                let url = matches[index];
+
+                // হিডেন আইফ্রেম (iframe) তৈরি করে ডাউনলোড টিগার করা
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = url;
+                document.body.appendChild(iframe);
+
+                // কাজ শেষে আইফ্রেম রিমুভ করা
+                setTimeout(() => {
+                    document.body.removeChild(iframe);
+                }, 6000);
+
+                index++;
+                statusDiv.innerText = `ডাউনলোড হচ্ছে: ${index} / ${matches.length}`;
+
+                // পরবর্তী ফাইলটির জন্য ১.২ সেকেন্ড পর আবার কল হবে
+                setTimeout(triggerNextDownload, 1200);
+            } else {
+                statusDiv.innerText = '✅ সবকটি ফাইলের ডাউনলোড প্রক্রিয়া সম্পন্ন হয়েছে!';
+                downloadBtn.disabled = false;
+            }
+        }
+
+        triggerNextDownload();
+    }
+</script>
+
+</body>
+</html>
